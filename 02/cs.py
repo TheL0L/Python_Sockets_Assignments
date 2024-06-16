@@ -16,7 +16,7 @@ def setup_listener(port : int) -> socket:
 
 def await_connections(listener : socket) -> None:
     LOG('awaiting for connections...')
-    while True:  # TODO: think of a way to stop the loop
+    while True:
         conn, client_address = listener.accept()
         LOG(f'connection with {client_address} established.')
         threading.Thread(target=respond_to_client, args=(conn, client_address)).start()
@@ -27,16 +27,36 @@ def attempt_handshake(ip : str, port : int) -> socket:
         sock.connect((ip, port))
         return sock
     except OSError as err:
-        #LOG(f'connection to {ip}:{port} failed. {err}')  # log failed connections
+        LOG(f'connection to {ip}:{port} failed.\n\t{err}')  # log failed connections
         return None
 
 def respond_to_client(conn_socket : socket, client_address : tuple[str, int]) -> None:
-    while True:
+    try:
         data = conn_socket.recv(_PACKET_SIZE)
         message = data.decode()
-        print(f'{client_address}: {message}')
+        print(f'{client_address} -> me: {message}')
         if message.lower() == 'hello':
-            conn_socket.send(b'World')
+            message = b'World'
+            conn_socket.send(message)
+            print(f'me -> {client_address}: {message}')
+    except OSError as err:
+        LOG(f'an error occurred while responding to client.\n\t{err}')
+
+def initiate_dialog(conn_socket : socket, client_address : tuple[str, int]) -> None:
+    try:
+        message = b'Hello'
+        conn_socket.send(message)
+        print(f'me -> {client_address}: {message}')
+        data = conn_socket.recv(_PACKET_SIZE)
+        message = data.decode()
+        print(f'{client_address} -> me: {message}')
+        if message.lower() == 'world':
+            print('dialog finished.')
+            return
+        else:
+            print('bad response.')
+    except OSError as err:
+        LOG(f'an error occurred while holding a conversation.\n\t{err}')
 
 def LOG(message : str) -> None:
     print(f'LOG: {message}')
@@ -55,29 +75,30 @@ while port_index == -1:
     LOG('ERROR: Selected port is invalid or taken.\n')
     port_index = port_select(_PORTS)
 
-# listener setup
-listener = setup_listener(_PORTS[port_index])
-listener_thread = threading.Thread(target=await_connections, args=(listener,))
-listener_thread.start()
-
 # handshake attempts with everyone, except ourselves
-connections = [attempt_handshake(_LOCALHOST, p) for p in _PORTS if p != _PORTS[port_index]]
+connections = {(_LOCALHOST, p):attempt_handshake(_LOCALHOST, p) for p in _PORTS if p != _PORTS[port_index]}
 
 # discard any failed connections
-connections = [c for c in connections if c is not None]
+connections = {addr:c for addr,c in connections.items() if c is not None}
 
 # send messages over successful connections
-for c in connections:
-    c.send(b'Hello')
-    # message is not being received by anyone, should investigate the listener 
+threads = []
+for addr, c in connections.items():
+    x = threading.Thread(target=initiate_dialog, args=(c, addr))
+    threads.append(x)
+    x.start()
 
-# merge listener with main thread, and await end of program execution
-listener_thread.join()
+# listener setup
+listener = setup_listener(_PORTS[port_index])
+await_connections(listener)
 
-# close listener and all connections
+# unreachable code due to endless listener
+# adding a timeout to the listener will solve it
+
+# close all connections
 LOG('closing all connections...')
 listener.close()
-for c in connections:
+for _, c in connections:
     c.close()
 
 LOG('done.')
