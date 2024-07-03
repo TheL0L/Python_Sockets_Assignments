@@ -13,7 +13,7 @@ def await_messages(server_sock: socket.socket):
 
         # receive data bytes
         try:
-            bytes_data = server_sock.recv(shared._HEADER_SIZE)
+            bytes_data = server_sock.recv(_len)
             data       = bytes_data.decode()
         except OSError as err:
             shared.LOG_ERROR(f'an error occurred while retrieving message data.\n\t{err}')
