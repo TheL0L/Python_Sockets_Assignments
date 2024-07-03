@@ -62,7 +62,7 @@ def request_servers(server_sock: socket.socket) -> None:
     bytes_header = struct.pack(_HEADER_FORMAT, _type, _sub_type, _len, _sub_len)
 
     # send header
-    server_sock.send(bytes_header)
+    send_via_socket(server_sock, bytes_header)
     return
 
 def request_clients(server_sock: socket.socket) -> None:
@@ -76,7 +76,7 @@ def request_clients(server_sock: socket.socket) -> None:
     bytes_header = struct.pack(_HEADER_FORMAT, _type, _sub_type, _len, _sub_len)
 
     # send header
-    server_sock.send(bytes_header)
+    send_via_socket(server_sock, bytes_header)
     return
 
 def send_servers(server_sock: socket.socket, data: str) -> None:
@@ -93,8 +93,7 @@ def send_servers(server_sock: socket.socket, data: str) -> None:
     bytes_header = struct.pack(_HEADER_FORMAT, _type, _sub_type, _len, _sub_len)
 
     # send header & data
-    server_sock.send(bytes_header)
-    server_sock.send(bytes_data)
+    send_via_socket(server_sock, bytes_header, bytes_data)
     return
 
 def send_clients(server_sock: socket.socket, data: str) -> None:
@@ -111,8 +110,7 @@ def send_clients(server_sock: socket.socket, data: str) -> None:
     bytes_header = struct.pack(_HEADER_FORMAT, _type, _sub_type, _len, _sub_len)
 
     # send header & data
-    server_sock.send(bytes_header)
-    server_sock.send(bytes_data)
+    send_via_socket(server_sock, bytes_header, bytes_data)
     return
 
 def set_username(server_sock: socket.socket, data: str) -> None:
@@ -130,9 +128,7 @@ def set_username(server_sock: socket.socket, data: str) -> None:
     bytes_header = struct.pack(_HEADER_FORMAT, _type, _sub_type, _len, _sub_len)
 
     # send header & data
-    server_sock.send(bytes_header)
-    if sender_is_clinet:
-        server_sock.send(bytes_username)
+    send_via_socket(server_sock, bytes_header, bytes_username if sender_is_clinet else None)
     return
 
 def send_message(server_sock: socket.socket, sender: str, recipient: str, data: str) -> None:
@@ -151,7 +147,21 @@ def send_message(server_sock: socket.socket, sender: str, recipient: str, data: 
     bytes_header = struct.pack(_HEADER_FORMAT, _type, _sub_type, _len, _sub_len)
 
     # send header & data
-    server_sock.send(bytes_header)
-    server_sock.send(bytes_message)
+    send_via_socket(server_sock, bytes_header, bytes_message)
     return
+
+def send_via_socket(sock: socket.socket, header: bytes, data: bytes = None) -> None:
+    try:
+        sock.send(header)
+    except OSError as err:
+        LOG_ERROR(f'an error occurred while sending message header.\n\t{err}')
+        return
+
+    if data is None:
+        return
+
+    try:
+        sock.send(data)
+    except OSError as err:
+        LOG_ERROR(f'an error occurred while sending message data.\n\t{err}')
 
