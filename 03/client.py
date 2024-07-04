@@ -1,4 +1,4 @@
-import socket, struct, sys, threading
+import socket, sys, threading
 import shared
 
 def await_messages(server_sock: socket.socket):
@@ -35,7 +35,7 @@ if server_sock is None:
 
 # send username to the server
 username = input('Enter your name: ')
-shared.set_username(server_sock, username)
+shared.set_username(server_sock, username, True)
 
 # create listener for the server
 server_listener = threading.Thread(target=await_messages, args=(server_sock,))
