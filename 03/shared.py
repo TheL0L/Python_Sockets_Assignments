@@ -114,14 +114,13 @@ def send_clients(server_sock: socket.socket, data: str) -> None:
     send_via_socket(server_sock, bytes_header, bytes_data)
     return
 
-def set_username(server_sock: socket.socket, data: str) -> None:
+def set_username(server_sock: socket.socket, data: str, client: bool) -> None:
     # prepare data segment
     bytes_username   = data.encode()
-    sender_is_clinet = len(bytes_username) > 0
 
     # prepare header values
     _type       = 2
-    _sub_type   = 1 if sender_is_clinet else 0
+    _sub_type   = 1 if client else 0
     _len        = len(bytes_username)
     _sub_len    = 0
 
@@ -129,7 +128,7 @@ def set_username(server_sock: socket.socket, data: str) -> None:
     bytes_header = struct.pack(_HEADER_FORMAT, _type, _sub_type, _len, _sub_len)
 
     # send header & data
-    send_via_socket(server_sock, bytes_header, bytes_username if sender_is_clinet else None)
+    send_via_socket(server_sock, bytes_header, bytes_username)
     return
 
 def send_message(server_sock: socket.socket, sender: str, recipient: str, data: str) -> None:
