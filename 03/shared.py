@@ -153,7 +153,7 @@ def send_message(server_sock: socket.socket, sender: str, recipient: str, data: 
 def send_via_socket(sock: socket.socket, header: bytes, data: bytes = None) -> None:
     try:
         sock.send(header)
-    except OSError as err:
+    except Exception as err:
         LOG_ERROR(f'an error occurred while sending message header.\n\t{err}')
         return
 
@@ -162,6 +162,6 @@ def send_via_socket(sock: socket.socket, header: bytes, data: bytes = None) -> N
 
     try:
         sock.send(data)
-    except OSError as err:
+    except Exception as err:
         LOG_ERROR(f'an error occurred while sending message data.\n\t{err}')
 
