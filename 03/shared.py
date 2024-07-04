@@ -165,3 +165,44 @@ def send_via_socket(sock: socket.socket, header: bytes, data: bytes = None) -> N
     except Exception as err:
         LOG_ERROR(f'an error occurred while sending message data.\n\t{err}')
 
+def receive_via_socket(sock: socket.socket) -> dict:
+    response = {
+        'bytes_header': None,
+        'type':         None,
+        'sub_type':     None,
+        'len':          None,
+        'sub_len':      None,
+        'bytes_data':   None,
+        'data':         None,
+        'error':        None
+    }
+
+    # receive header bytes
+    try:
+        bytes_header = sock.recv(_HEADER_SIZE)
+        response['bytes_header'] = bytes_header
+        _type, _sub_type, _len, _sub_len = struct.unpack(_HEADER_FORMAT, bytes_header)
+        response['type']     = _type
+        response['sub_type'] = _sub_type
+        response['len']      = _len
+        response['sub_len']  = _sub_len
+    except Exception as err:
+        LOG_ERROR(f'an error occurred while retrieving message header.\n\t{err}')
+        response['error']  = err
+        return response
+    
+    if _len == 0:
+        return response
+
+    # receive data bytes
+    try:
+        bytes_data = sock.recv(_len)
+        response['bytes_data']  = bytes_data
+        data       = bytes_data.decode()
+        response['data']  = data
+    except Exception as err:
+        LOG_ERROR(f'an error occurred while retrieving message data.\n\t{err}')
+        return response
+    
+    return response
+
