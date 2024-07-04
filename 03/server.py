@@ -21,7 +21,7 @@ def respond_to_connection(conn_socket: socket.socket, conn_address: tuple[str, i
     global clients, servers, temp
 
     if conn_socket is None:
-        print(f'cant respond to connection {conn_address=}  {conn_socket=}')
+        shared.LOG_ERROR(f'cant respond to connection {conn_address=}  {conn_socket=}')
         return
 
     while True:
