@@ -45,9 +45,10 @@ def attempt_handshake(ip: str, port: int) -> socket.socket:
     try:
         sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM, 0)
         sock.connect((ip, port))
+        LOG_MESSAGE(f'connection with {(ip, port)} established.')
         return sock
     except OSError as err:
-        LOG_ERROR(f'connection to {ip}:{port} failed.\n\t{err}')  # log failed connections
+        LOG_ERROR(f'connection to {(ip, port)} failed.\n\t{err}')  # log failed connections
         return None
 
 # protocol methods
