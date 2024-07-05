@@ -180,6 +180,8 @@ def receive_via_socket(sock: socket.socket) -> dict:
     # receive header bytes
     try:
         bytes_header = sock.recv(_HEADER_SIZE)
+        if len(bytes_header) == 0:
+            raise ConnectionResetError
         response['bytes_header'] = bytes_header
         _type, _sub_type, _len, _sub_len = struct.unpack(_HEADER_FORMAT, bytes_header)
         response['type']     = _type
@@ -197,6 +199,8 @@ def receive_via_socket(sock: socket.socket) -> dict:
     # receive data bytes
     try:
         bytes_data = sock.recv(_len)
+        if len(bytes_data) == 0:
+            raise ConnectionResetError
         response['bytes_data']  = bytes_data
         data       = bytes_data.decode()
         response['data']  = data
