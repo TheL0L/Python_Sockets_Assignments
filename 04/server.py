@@ -108,6 +108,15 @@ def respond_to_connection(conn_socket: socket.socket, conn_address: tuple[str, i
             else:
                 shared.LOG_MESSAGE(f'broadcasting message...\n\t{sender} -> {recipient}: {message}')
                 broadcast_to_servers(response['bytes_header'], response['bytes_data'])
+        # received a ping
+        elif response['type'] == 4 and response['sub_type'] == 0:
+            shared.LOG_MESSAGE('received a ping, replying.')
+            shared.send_ping(conn_socket, is_reply=True)
+        # received a ping reply
+        elif response['type'] == 4 and response['sub_type'] == 1:
+            shared.LOG_MESSAGE('received a ping reply, but it was not requested.'
+                               + f'\n\tsender {conn_address}.')
+            continue  # unused functionality
 
 def share_servers(requester: socket.socket) -> None:
     # prepare a list of available servers, skip requester
