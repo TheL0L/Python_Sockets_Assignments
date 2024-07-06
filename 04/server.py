@@ -22,6 +22,7 @@ def respond_to_connection(conn_socket: socket.socket, conn_address: tuple[str, i
 
     if conn_socket is None:
         shared.LOG_ERROR(f'cant respond to connection {conn_address=}  {conn_socket=}')
+        handle_disconnect(conn_socket, conn_address)
         return
 
     while True:
@@ -31,9 +32,8 @@ def respond_to_connection(conn_socket: socket.socket, conn_address: tuple[str, i
         if response['error'] is not None:
             # check if it was caused due to the connection closing
             if isinstance(response['error'], ConnectionResetError):
-                # close the socket, and end the thread
-                conn_socket.close()
-                shared.LOG_MESSAGE(f'connection with {conn_address} has been closed.')
+                # handle disconnection, and end the thread
+                handle_disconnect(conn_socket, conn_address)
                 return
             # otherwise continue
             continue
@@ -175,6 +175,38 @@ def broadcast_to_servers(bytes_header: bytes, bytes_data: bytes) -> None:
     for server in servers.values():
         shared.send_via_socket(server, bytes_header, bytes_data)
 
+def handle_disconnect(conn_socket: socket.socket, conn_address: tuple[str, int]) -> None:
+    # try to close the socket if still opened
+    if conn_socket is not None:
+        try:
+            conn_socket.close()
+        except:
+            pass
+    
+    # remove address from servers connections list
+    if   conn_socket in servers.values():
+        disconnected_addr = None
+        for addr, sock in servers.items():
+            if sock == conn_socket:
+                disconnected_addr = addr
+                break
+        del servers[disconnected_addr]
+        shared.LOG_MESSAGE(f'connection with server "{disconnected_addr[1]}" has been closed.')
+    # remove address from clients connections list
+    elif conn_socket in clients.values():
+        disconnected_user = None
+        for user, sock in clients.items():
+            if sock == conn_socket:
+                disconnected_user = user
+                break
+        del clients[disconnected_user]
+        shared.LOG_MESSAGE(f'connection with client "{disconnected_user}" has been closed.')
+    # remove address from temporary connections list
+    elif conn_socket in temp:
+        temp.remove(conn_socket)
+    else:
+        shared.LOG_ERROR(f'connection with {conn_address} was not registered!')
+    return
 
 # port selection
 port_index = shared.port_select(shared._PORTS)
