@@ -67,7 +67,7 @@ def respond_to_connection(conn_socket: socket.socket, conn_address: tuple[str, i
                                + f'\n\tsender {conn_address}.')
             # remove server from temp list
             try:
-                temp.remove(conn_address)
+                temp.remove(conn_socket)
             except:
                 pass
             
@@ -77,7 +77,7 @@ def respond_to_connection(conn_socket: socket.socket, conn_address: tuple[str, i
         elif response['type'] == 2 and response['sub_type'] == 1:
             # remove client from temp list
             try:
-                temp.remove(conn_address)
+                temp.remove(conn_socket)
             except:
                 pass
 
