@@ -150,6 +150,20 @@ def send_message(server_sock: socket.socket, sender: str, recipient: str, data: 
     send_via_socket(server_sock, bytes_header, bytes_message)
     return
 
+def send_ping(server_sock: socket.socket, is_reply: bool = False) -> None:
+    # prepare header values
+    _type       = 4
+    _sub_type   = 1 if is_reply else 0
+    _len        = 0
+    _sub_len    = 0
+
+    # construct header
+    bytes_header = struct.pack(_HEADER_FORMAT, _type, _sub_type, _len, _sub_len)
+
+    # send header
+    send_via_socket(server_sock, bytes_header)
+    return
+
 def send_via_socket(sock: socket.socket, header: bytes, data: bytes = None) -> None:
     try:
         sock.send(header)
