@@ -33,6 +33,7 @@ def respond_to_connection(conn_socket: socket.socket, conn_address: tuple[str, i
             if isinstance(response['error'], ConnectionResetError):
                 # close the socket, and end the thread
                 conn_socket.close()
+                shared.LOG_MESSAGE(f'connection with {conn_address} has been closed.')
                 return
             # otherwise continue
             continue

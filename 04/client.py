@@ -11,6 +11,7 @@ def await_messages(server_sock: socket.socket):
             if isinstance(response['error'], ConnectionResetError):
                 # close the socket, and end the thread
                 server_sock.close()
+                shared.LOG_MESSAGE('connection with server has been closed.')
                 return
             # otherwise continue
             continue
